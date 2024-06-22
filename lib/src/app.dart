@@ -3,6 +3,7 @@ import 'package:easy_pay/src/home/views/home_view.dart';
 import 'package:easy_pay/src/login/views/login_view.dart';
 import 'package:easy_pay/src/login/views/olvido_su_contrasenha_view.dart';
 import 'package:easy_pay/src/login/views/register_view.dart';
+import 'package:easy_pay/src/pago_qr/views/scanear_qr_view.dart';
 import 'package:easy_pay/src/sample_feature/sample_item_details_view.dart';
 import 'package:easy_pay/src/settings/settings_controller.dart';
 import 'package:easy_pay/src/settings/settings_view.dart';
@@ -73,6 +74,8 @@ class MyApp extends StatelessWidget {
                     return const OlvidoSuContrasenhaView();
                   case HomeView.routeName:
                     return const HomeView();
+                  case ScanerarQRView.routeName:
+                    return const ScanerarQRView();
                   case LoginView.routeName:
                   default:
                     return const LoginView();

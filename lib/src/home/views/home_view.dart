@@ -1,6 +1,7 @@
 import 'package:easy_pay/src/core/widgets/base/footer.dart';
 import 'package:easy_pay/src/core/widgets/image_text/image_text_button.dart';
 import 'package:easy_pay/src/core/widgets/image_text/image_text_button_row.dart';
+import 'package:easy_pay/src/pago_qr/views/scanear_qr_view.dart';
 import 'package:flutter/material.dart';
 
 class HomeView extends StatefulWidget {
@@ -35,7 +36,8 @@ class _HomeViewState extends State<HomeView> {
               SizedBox(height: 5),
               ImageTextButtonRow(
                 onPressed: () {
-                  print("easy_pay Pressed");
+                  Navigator.restorablePushNamed(
+                      context, ScanerarQRView.routeName);
                 },
                 imagePath:
                     'assets/images/easy_pay.png', // Ruta de la imagen local

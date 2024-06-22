@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui_web';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -14,84 +15,121 @@ class ScanerarQRView extends StatefulWidget {
 }
 
 class _ScanerarQRViewState extends State<ScanerarQRView> {
-  final TextEditingController correoController = TextEditingController();
+  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
+  Barcode? result;
+  QRViewController? controller;
+  final ImagePicker _picker = ImagePicker();
+
+  @override
+  void reassemble() {
+    super.reassemble();
+    if (Platform.isAndroid) {
+      controller?.pauseCamera();
+    }
+    controller?.resumeCamera();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final Size size = MediaQuery.of(context).size;
     return Scaffold(
       appBar: AppBar(
-        title: Text('Home'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Center(
-                child: Container(
-                  width: size.width / 3,
-                  height: size.width / 3,
-                  child: Image.asset('assets/images/easy_pay.png'),
-                ),
-              ),
-              SizedBox(height: 5),
-              ImageTextButtonRow(
-                onPressed: () {
-                  print("easy_pay Pressed");
-                },
-                imagePath:
-                    'assets/images/easy_pay.png', // Ruta de la imagen local
-                text: 'pago con QR',
-              ),
-              SizedBox(height: 5),
-              ImageTextButtonRow(
-                onPressed: () {
-                  print("flutter_logo Pressed");
-                },
-                imagePath:
-                    'https://images.pexels.com/photos/20741814/pexels-photo-20741814/free-photo-of-paisaje-mujer-flores-campo.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', // Ruta de la imagen local
-                text: 'Pago de servicio',
-              ),
-              SizedBox(height: 5),
-              ImageTextButtonRow(
-                onPressed: () {
-                  print("flutter_logo Pressed");
-                },
-                imagePath:
-                    'assets/images/flutter_logo.png', // Ruta de la imagen local
-                text: 'Cajero automático',
-              ),
-              SizedBox(height: 5),
-              ImageTextButtonRow(
-                onPressed: () {
-                  print("puntos");
-                },
-                imagePath:
-                    'assets/images/flutter_logo.png', // Ruta de la imagen local
-                text: 'puntos',
-              ),
-              SizedBox(height: 5),
-              ImageTextButtonRow(
-                onPressed: () {
-                  print("puntos");
-                },
-                imagePath:
-                    'assets/images/flutter_logo.png', // Ruta de la imagen local
-                text: 'Control consumo',
-              ),
-              ImageTextButtonRow(
-                onPressed: () {
-                  print("puntos");
-                },
-                imagePath:
-                    'assets/images/flutter_logo.png', // Ruta de la imagen local
-                text: 'Estaciones de servicio',
-              ),
-            ],
+        title: Text('Flutter QR Scanner'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.photo),
+            onPressed: _pickImageFromGallery,
           ),
-        ),
+          IconButton(
+            icon: Icon(Icons.camera_alt),
+            onPressed: _pickImageFromCamera,
+          ),
+        ],
       ),
-      bottomNavigationBar: Footer(boton: 'inicio'),
+      body: Column(
+        children: <Widget>[
+          Expanded(
+            flex: 5,
+            child: QRView(
+              key: qrKey,
+              onQRViewCreated: _onQRViewCreated,
+              overlay: QrScannerOverlayShape(
+                borderColor: Colors.red,
+                borderRadius: 10,
+                borderLength: 30,
+                borderWidth: 10,
+                cutOutSize: 300,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Center(
+              child: (result != null)
+                  ? Text('Código encontrado: ${result!.code}')
+                  : Text('Escanea un código QR'),
+            ),
+          )
+        ],
+      ),
     );
+  }
+
+  void _onQRViewCreated(QRViewController controller) {
+    setState(() {
+      this.controller = controller;
+    });
+    controller.scannedDataStream.listen((scanData) {
+      setState(() {
+        result = scanData;
+      });
+    });
+  }
+
+  Future<void> _pickImageFromGallery() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      print('Imagen seleccionada desde galería: ${image.path}');
+      try {
+        final code = await QrCodeToolsPlugin.decodeFrom(image.path);
+        print('Código QR decodificado: $code');
+        setState(() {
+          result = Barcode(code, BarcodeFormat.qrcode, []);
+        });
+      } catch (e) {
+        print('Error al decodificar QR: $e');
+        setState(() {
+          result = null;
+        });
+      }
+    } else {
+      print('No se seleccionó ninguna imagen');
+    }
+  }
+
+  Future<void> _pickImageFromCamera() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+    if (image != null) {
+      print('Imagen capturada desde cámara: ${image.path}');
+      try {
+        final code = await QrCodeToolsPlugin.decodeFrom(image.path);
+        print('Código QR decodificado: $code');
+        setState(() {
+          result = Barcode(code, BarcodeFormat.qrcode, []);
+        });
+      } catch (e) {
+        print('Error al decodificar QR: $e');
+        setState(() {
+          result = null;
+        });
+      }
+    } else {
+      print('No se capturó ninguna imagen');
+    }
+  }
+
+  @override
+  void dispose() {
+    controller?.dispose();
+    super.dispose();
   }
 }
